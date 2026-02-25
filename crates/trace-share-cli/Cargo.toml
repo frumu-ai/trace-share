@@ -21,4 +21,6 @@ tokio.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 serde_json.workspace = true
-trace-share-core = { path = "../trace-share-core", version = "0.0.2" }
+serde.workspace = true
+reqwest.workspace = true
+trace-share-core = { path = "../trace-share-core", version = "0.0.3" }

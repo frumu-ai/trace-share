@@ -1784,6 +1784,8 @@ version = "0.0.2"
 dependencies = [
  "anyhow",
  "clap",
+ "reqwest",
+ "serde",
  "serde_json",
  "tokio",
  "trace-share-core",

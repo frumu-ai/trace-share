@@ -8,7 +8,7 @@ An open-source proposal for building the public data infrastructure behind bette
 
 [Documentation](https://frumu-ai.github.io/trace-share/)
 
-## Proposal in One Line
+## Proposal
 
 `trace-share` is an opt-in pipeline that turns locally sanitized coding-agent traces into:
 - searchable public Episodes for curation, and

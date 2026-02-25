@@ -1,6 +1,7 @@
 use anyhow::{Result, bail};
 use clap::{Args, Parser, Subcommand};
-use std::{collections::HashSet, path::PathBuf};
+use serde::Deserialize;
+use std::{collections::HashSet, path::PathBuf, time::Duration};
 use trace_share_core::{
     config::{ensure_dirs, load_config},
     consent::init_consent,
@@ -15,6 +16,8 @@ use trace_share_core::{
 #[derive(Debug, Parser)]
 #[command(name = "trace-share")]
 #[command(about = "Sanitize and share coding-agent traces safely")]
+#[command(version)]
+#[command(after_help = concat!("Version: ", env!("CARGO_PKG_VERSION")))]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -230,6 +233,9 @@ async fn main() -> Result<()> {
         .init();
 
     ensure_dirs()?;
+    if let Some(notice) = check_for_update_notice().await {
+        eprintln!("{notice}");
+    }
     let cli = Cli::parse();
 
     match cli.command {
@@ -244,6 +250,69 @@ async fn main() -> Result<()> {
         Commands::Status => status_command(),
         Commands::Reset(cmd) => reset_command(cmd),
     }
+}
+
+#[derive(Debug, Deserialize)]
+struct GitHubRelease {
+    tag_name: String,
+}
+
+async fn check_for_update_notice() -> Option<String> {
+    if std::env::var("TRACE_SHARE_DISABLE_UPDATE_CHECK")
+        .ok()
+        .map(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes"))
+        .unwrap_or(false)
+    {
+        return None;
+    }
+
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_millis(1200))
+        .build()
+        .ok()?;
+
+    let release = client
+        .get("https://api.github.com/repos/frumu-ai/trace-share/releases/latest")
+        .header(reqwest::header::USER_AGENT, "trace-share-cli")
+        .send()
+        .await
+        .ok()?
+        .error_for_status()
+        .ok()?
+        .json::<GitHubRelease>()
+        .await
+        .ok()?;
+
+    let latest = release.tag_name.trim_start_matches('v');
+    let current = env!("CARGO_PKG_VERSION");
+    if is_version_newer(latest, current) {
+        return Some(format!(
+            "update available: trace-share {latest} (current {current})\n  npm: npm i -g @frumu/trace-share\n  cargo: cargo install trace-share-cli --locked"
+        ));
+    }
+    None
+}
+
+fn is_version_newer(latest: &str, current: &str) -> bool {
+    parse_semver(latest) > parse_semver(current)
+}
+
+fn parse_semver(v: &str) -> (u64, u64, u64) {
+    let core = v.split('-').next().unwrap_or(v);
+    let mut parts = core.split('.');
+    let major = parts
+        .next()
+        .and_then(|p| p.parse::<u64>().ok())
+        .unwrap_or(0);
+    let minor = parts
+        .next()
+        .and_then(|p| p.parse::<u64>().ok())
+        .unwrap_or(0);
+    let patch = parts
+        .next()
+        .and_then(|p| p.parse::<u64>().ok())
+        .unwrap_or(0);
+    (major, minor, patch)
 }
 
 async fn run_command(cmd: RunCmd) -> Result<()> {
