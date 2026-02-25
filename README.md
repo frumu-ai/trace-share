@@ -6,6 +6,8 @@ An open-source proposal for building the public data infrastructure behind bette
 [![Registry Schema](https://github.com/frumu-ai/trace-share/actions/workflows/registry-schema.yml/badge.svg)](https://github.com/frumu-ai/trace-share/actions/workflows/registry-schema.yml)
 [![Docs Site](https://github.com/frumu-ai/trace-share/actions/workflows/docs-site.yml/badge.svg)](https://github.com/frumu-ai/trace-share/actions/workflows/docs-site.yml)
 
+[Documentation](https://frumu-ai.github.io/trace-share/)
+
 ## Proposal in One Line
 
 `trace-share` is an opt-in pipeline that turns locally sanitized coding-agent traces into:
