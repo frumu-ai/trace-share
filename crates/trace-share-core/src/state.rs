@@ -328,6 +328,7 @@ impl StateStore {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn upsert_episode_upload(
         &self,
         id: &str,

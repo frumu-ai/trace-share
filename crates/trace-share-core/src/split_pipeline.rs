@@ -119,6 +119,7 @@ pub fn sanitize_to_dir(
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn publish_from_input(
     config: &AppConfig,
     input: &Path,
@@ -275,11 +276,12 @@ fn collect_input_files(input: &str) -> Result<Vec<PathBuf>> {
 
     let has_glob = input.contains('*') || input.contains('?') || input.contains('[');
     if has_glob {
-        for entry in glob(input).with_context(|| format!("invalid input glob: {input}"))? {
-            if let Ok(path) = entry {
-                if path.is_file() {
-                    files.insert(path);
-                }
+        for path in glob(input)
+            .with_context(|| format!("invalid input glob: {input}"))?
+            .flatten()
+        {
+            if path.is_file() {
+                files.insert(path);
             }
         }
         return Ok(files.into_iter().collect());

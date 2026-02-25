@@ -14,7 +14,14 @@ required=(
 
 missing=0
 for cmd in "${required[@]}"; do
-  if ! rg -F --quiet "$cmd" "$DOCS_ROOT"; then
+  if command -v rg >/dev/null 2>&1; then
+    found=0
+    rg -F --quiet "$cmd" "$DOCS_ROOT" || found=1
+  else
+    found=0
+    grep -R -F --quiet -- "$cmd" "$DOCS_ROOT" || found=1
+  fi
+  if [[ $found -ne 0 ]]; then
     echo "Missing required docs command snippet: $cmd" >&2
     missing=1
   fi

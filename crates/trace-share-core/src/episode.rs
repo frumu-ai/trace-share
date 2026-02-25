@@ -91,6 +91,7 @@ pub struct TooltraceRecord {
     pub consent: EpisodeConsent,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn build_episode(
     source_tool: &str,
     session_id: &str,
@@ -232,6 +233,7 @@ pub fn build_episode(
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn build_episodes(
     source_tool: &str,
     session_id: &str,

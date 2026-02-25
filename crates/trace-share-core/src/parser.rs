@@ -88,7 +88,7 @@ fn value_to_event(source: &str, session_id: &str, v: Value) -> CanonicalEvent {
 
     let tool_name = payload
         .get("tool")
-        .and_then(|t| t.get("name").or_else(|| Some(t)))
+        .and_then(|t| t.get("name").or(Some(t)))
         .or_else(|| payload.get("name"))
         .and_then(Value::as_str)
         .map(str::to_string);
