@@ -10,6 +10,7 @@ Project documentation for trace-share.
 - [GOVERNANCE.md](GOVERNANCE.md) - Source registry governance and adapter contribution rules.
 - [PARSERS.md](PARSERS.md) - How to add new source parser adapters (`format` + `parser_hint`) safely.
 - [DATA_LICENSE.md](DATA_LICENSE.md) - Dataset licensing scope (CC0-1.0 default) and contributor rights.
+- [RELEASING.md](RELEASING.md) - Version bump, tag push, GitHub release flow, crates.io/npm publish steps.
 
 Additional repo docs:
 
