@@ -1,6 +1,9 @@
 ---
-title: trace-share
+title: Welcome
 description: Open data infrastructure for coding-agent training traces.
+sidebar:
+  label: Welcome
+  order: 1
 ---
 
 # trace-share
@@ -52,11 +55,10 @@ Community contributions are core to this project:
 - expand tests and CI reliability
 - improve docs and onboarding
 
-Start with [Welcome](./welcome/), then [CLI Usage](./cli/) and [Parser Adapters](./parsers/).
+Start with [CLI Usage](./cli/) and [Parser Adapters](./parsers/).
 
 ## Start Here
 
-- [Welcome](./welcome/)
 - [CLI Usage](./cli/)
 - [Parser Adapters](./parsers/)
 - [Proposal](./proposal/)

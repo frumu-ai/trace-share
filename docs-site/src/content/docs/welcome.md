@@ -1,5 +1,7 @@
 ---
-title: Welcome
+title: Legacy Welcome
+sidebar:
+  hidden: true
 ---
 
 `trace-share` is an opt-in pipeline for producing sanitized, training-ready coding-agent Episodes and versioned Snapshot datasets.

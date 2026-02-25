@@ -11,6 +11,7 @@ export default defineConfig({
     starlight({
       title: 'trace-share',
       description: 'Open data infrastructure for coding-agent training traces.',
+      customCss: ['./src/styles/oss-theme.css'],
       social: {
         github: 'https://github.com/frumu-ai/trace-share'
       }

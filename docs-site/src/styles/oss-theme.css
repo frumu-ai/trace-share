@@ -1,0 +1,49 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+:root {
+  --sl-font: "Space Grotesk", "Segoe UI", sans-serif;
+  --sl-font-mono: "IBM Plex Mono", "SFMono-Regular", ui-monospace, monospace;
+
+  --sl-hue-accent: 166;
+  --sl-color-accent-low: #0f2f2f;
+  --sl-color-accent: #2dd4bf;
+  --sl-color-accent-high: #9ff9e8;
+
+  --sl-color-bg: #0b1118;
+  --sl-color-bg-nav: #0e1622;
+  --sl-color-bg-sidebar: #101a29;
+  --sl-color-text: #d8e3f0;
+}
+
+html,
+body {
+  background:
+    radial-gradient(1200px 500px at 10% -10%, rgba(45, 212, 191, 0.16), transparent 55%),
+    radial-gradient(900px 400px at 90% 0%, rgba(60, 130, 246, 0.12), transparent 60%),
+    var(--sl-color-bg);
+}
+
+.site-title span {
+  letter-spacing: 0.02em;
+  font-weight: 700;
+}
+
+.hero,
+.content-panel {
+  animation: fade-in-up 360ms ease-out;
+}
+
+.sl-link-button.primary {
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.25), 0 8px 24px rgba(45, 212, 191, 0.2);
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
