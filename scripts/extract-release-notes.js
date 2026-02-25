@@ -10,7 +10,6 @@ if (!tag) {
 }
 
 const changelogPath = "CHANGELOG.md";
-const notesPaths = ["release_notes.md", "RELEASE_NOTES.md", "docs/release_notes.md"];
 
 function readIfExists(path) {
   return fs.existsSync(path) ? fs.readFileSync(path, "utf8") : null;
@@ -21,15 +20,35 @@ function normalizeTag(input) {
 }
 
 function extractFromChangelog(changelog, rawTag) {
-  const tagName = normalizeTag(rawTag).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const version = tagName.slice(2);
-  const versionEscaped = version.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const re = new RegExp(
-    `^##\\s+\\[?(?:${tagName}|${versionEscaped})\\]?[^\\n]*\\n([\\s\\S]*?)(?=^##\\s+|\\Z)`,
-    "m",
-  );
-  const match = changelog.match(re);
-  return match ? match[1].trim() : null;
+  const version = normalizeTag(rawTag).replace(/^v/, "");
+  const tagForms = new Set([
+    normalizeTag(rawTag).toLowerCase(),
+    version.toLowerCase(),
+  ]);
+
+  const lines = changelog.split(/\r?\n/);
+  let inSection = false;
+  const collected = [];
+
+  for (const line of lines) {
+    if (line.startsWith("## ")) {
+      const heading = line.toLowerCase();
+      const matched = [...tagForms].some((t) => heading.includes(`[${t}]`) || heading.includes(` ${t}`));
+      if (matched) {
+        inSection = true;
+        continue;
+      }
+      if (inSection) {
+        break;
+      }
+    }
+    if (inSection) {
+      collected.push(line);
+    }
+  }
+
+  const body = collected.join("\n").trim();
+  return body || null;
 }
 
 function gitSummary(rawTag) {
@@ -58,15 +77,6 @@ if (changelog) {
   if (extracted) {
     sections.push("## Changelog");
     sections.push(extracted);
-  }
-}
-
-for (const path of notesPaths) {
-  const notes = readIfExists(path);
-  if (notes && notes.trim()) {
-    sections.push("## Release Notes");
-    sections.push(notes.trim());
-    break;
   }
 }
 
