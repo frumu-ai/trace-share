@@ -201,8 +201,10 @@ fn ip_regex() -> Regex {
 }
 
 fn path_regex() -> Regex {
-    Regex::new(r"(?:/Users/[^/\s]+|/home/[^/\s]+|/root/[^/\s]*|[A-Za-z]:\\\\Users\\\\[^\\\s]+)")
-        .unwrap()
+    Regex::new(
+        r"(?i)(?:/Users/[^/\s]+|/home/[^/\s]+|/root/[^/\s]*|[A-Za-z]:[\\/](?:[^\\/\s]+[\\/])*[^\\/\s]+)",
+    )
+    .unwrap()
 }
 
 fn url_query_regex() -> Regex {
@@ -386,7 +388,7 @@ mod tests {
             session_id: "s".to_string(),
             ts: Utc::now(),
             kind: "user_msg".to_string(),
-            text: "token=abc123 email me at a@b.com from 127.0.0.1 /home/user/repo authorization: bearer ABCDEFGHIJ".to_string(),
+            text: "token=abc123 email me at a@b.com from 127.0.0.1 /home/user/repo C:\\Users\\alice\\repo authorization: bearer ABCDEFGHIJ".to_string(),
             tool: None,
             meta: None,
         }];
@@ -438,6 +440,7 @@ mod tests {
         assert!(contains_sensitive_patterns("token=abc123"));
         assert!(contains_sensitive_patterns("email is test@example.com"));
         assert!(contains_sensitive_patterns("visit https://x.y/z?a=1"));
+        assert!(contains_sensitive_patterns("cwd C:\\Users\\evang\\work\\trace-share"));
         assert!(contains_sensitive_patterns(
             "eyJhbGciOiJIUzI1NiJ9.abc1234567.zyx0987654"
         ));
