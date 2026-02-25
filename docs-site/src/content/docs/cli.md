@@ -13,7 +13,7 @@ cargo install --path crates/trace-share-cli
 From npm (prebuilt binaries):
 
 ```bash
-npm i -g @frumu-ai/trace-share
+npm i -g @frumu/trace-share
 ```
 
 Use local workspace binary directly (no install):

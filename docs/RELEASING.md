@@ -81,7 +81,7 @@ npm publish --access public
 
 Package name:
 
-- `@frumu-ai/trace-share`
+- `@frumu/trace-share`
 
 ## 7) Post-Release Checks
 
@@ -90,6 +90,6 @@ Package name:
 - Verify npm package is visible and installable:
 
 ```bash
-npm i -g @frumu-ai/trace-share
+npm i -g @frumu/trace-share
 trace-share --help
 ```

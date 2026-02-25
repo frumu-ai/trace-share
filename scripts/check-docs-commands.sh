@@ -4,7 +4,7 @@ set -euo pipefail
 DOCS_ROOT="docs-site/src/content/docs"
 
 required=(
-  "npm i -g @frumu-ai/trace-share"
+  "npm i -g @frumu/trace-share"
   "trace-share consent init --license CC0-1.0"
   "trace-share run --dry-run --review"
   "trace-share run --yes"
