@@ -13,6 +13,11 @@ use trace_share_core::{
 
 #[tokio::test]
 async fn uploads_episode_via_presigned_flow() {
+    let prior_insecure_http = std::env::var("TRACE_SHARE_ALLOW_INSECURE_HTTP").ok();
+    unsafe {
+        std::env::set_var("TRACE_SHARE_ALLOW_INSECURE_HTTP", "1");
+    }
+
     let listener = TcpListener::bind("127.0.0.1:0")
         .await
         .expect("bind listener");
@@ -70,6 +75,14 @@ async fn uploads_episode_via_presigned_flow() {
     assert_eq!(result.etag.as_deref(), Some("etag-1"));
 
     server.await.expect("server done");
+
+    unsafe {
+        if let Some(v) = prior_insecure_http {
+            std::env::set_var("TRACE_SHARE_ALLOW_INSECURE_HTTP", v);
+        } else {
+            std::env::remove_var("TRACE_SHARE_ALLOW_INSECURE_HTTP");
+        }
+    }
 }
 
 fn sample_episode() -> EpisodeRecord {

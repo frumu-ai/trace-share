@@ -1,5 +1,6 @@
 use std::{fs, path::Path};
 
+use serial_test::serial;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::TcpListener,
@@ -27,7 +28,13 @@ async fn snapshot_publish_dry_run_validates_artifacts_without_network() {
 }
 
 #[tokio::test]
+#[serial]
 async fn snapshot_publish_uploads_and_indexes() {
+    let prior_insecure_http = std::env::var("TRACE_SHARE_ALLOW_INSECURE_HTTP").ok();
+    unsafe {
+        std::env::set_var("TRACE_SHARE_ALLOW_INSECURE_HTTP", "1");
+    }
+
     let root = std::env::temp_dir().join(format!(
         "trace-share-snapshot-publish-{}",
         uuid::Uuid::new_v4()
@@ -51,6 +58,14 @@ async fn snapshot_publish_uploads_and_indexes() {
 
     worker_task.await.expect("worker task");
     upstash_task.await.expect("upstash task");
+
+    unsafe {
+        if let Some(v) = prior_insecure_http {
+            std::env::set_var("TRACE_SHARE_ALLOW_INSECURE_HTTP", v);
+        } else {
+            std::env::remove_var("TRACE_SHARE_ALLOW_INSECURE_HTTP");
+        }
+    }
 }
 
 fn create_snapshot_layout(snapshot_dir: &Path) {

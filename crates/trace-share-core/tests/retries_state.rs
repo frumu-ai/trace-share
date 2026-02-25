@@ -41,9 +41,11 @@ async fn retries_transient_failures_and_persists_upload_state() {
     .expect("write sources manifest");
 
     let prior_home = std::env::var("HOME").ok();
+    let prior_insecure_http = std::env::var("TRACE_SHARE_ALLOW_INSECURE_HTTP").ok();
     unsafe {
         std::env::set_var("HOME", &home);
         std::env::set_var("TRACE_SHARE_HOME", &home);
+        std::env::set_var("TRACE_SHARE_ALLOW_INSECURE_HTTP", "1");
     }
 
     let mut cfg = AppConfig::default();
@@ -98,6 +100,11 @@ async fn retries_transient_failures_and_persists_upload_state() {
             std::env::remove_var("HOME");
         }
         std::env::remove_var("TRACE_SHARE_HOME");
+        if let Some(v) = prior_insecure_http {
+            std::env::set_var("TRACE_SHARE_ALLOW_INSECURE_HTTP", v);
+        } else {
+            std::env::remove_var("TRACE_SHARE_ALLOW_INSECURE_HTTP");
+        }
     }
 
     worker_task.await.expect("worker task should complete");
@@ -132,9 +139,11 @@ async fn does_not_retry_non_transient_400_errors() {
     .expect("write sources manifest");
 
     let prior_home = std::env::var("HOME").ok();
+    let prior_insecure_http = std::env::var("TRACE_SHARE_ALLOW_INSECURE_HTTP").ok();
     unsafe {
         std::env::set_var("HOME", &home);
         std::env::set_var("TRACE_SHARE_HOME", &home);
+        std::env::set_var("TRACE_SHARE_ALLOW_INSECURE_HTTP", "1");
     }
 
     let mut cfg = AppConfig::default();
@@ -176,6 +185,11 @@ async fn does_not_retry_non_transient_400_errors() {
             std::env::remove_var("HOME");
         }
         std::env::remove_var("TRACE_SHARE_HOME");
+        if let Some(v) = prior_insecure_http {
+            std::env::set_var("TRACE_SHARE_ALLOW_INSECURE_HTTP", v);
+        } else {
+            std::env::remove_var("TRACE_SHARE_ALLOW_INSECURE_HTTP");
+        }
     }
 
     worker_task.await.expect("worker task should complete");

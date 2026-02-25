@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use tokio::time::{Duration, sleep};
 
+use crate::security::ensure_secure_url;
 use crate::{config::AppConfig, episode::EpisodeRecord};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,6 +52,7 @@ async fn upload_episode_legacy(
         .base_url
         .as_ref()
         .context("missing TRACE_SHARE_WORKER_BASE_URL")?;
+    ensure_secure_url(base_url, "worker base URL")?;
 
     let endpoint = format!("{}/v1/episodes", base_url.trim_end_matches('/'));
     let client = reqwest::Client::builder()
@@ -103,6 +105,7 @@ async fn upload_episode_presigned(
         .base_url
         .as_ref()
         .context("missing TRACE_SHARE_WORKER_BASE_URL")?;
+    ensure_secure_url(base_url, "worker base URL")?;
     let presign_endpoint = format!("{}/v1/episodes/presign", base_url.trim_end_matches('/'));
     let complete_endpoint = format!("{}/v1/episodes/complete", base_url.trim_end_matches('/'));
     let client = reqwest::Client::builder()
@@ -163,6 +166,7 @@ pub async fn push_revocation(
         .base_url
         .as_ref()
         .context("missing TRACE_SHARE_WORKER_BASE_URL")?;
+    ensure_secure_url(base_url, "worker base URL")?;
 
     let endpoint = format!("{}/v1/revocations", base_url.trim_end_matches('/'));
     let client = reqwest::Client::builder()
@@ -264,6 +268,7 @@ async fn put_with_retry(
     body: &[u8],
     label: &str,
 ) -> Result<()> {
+    ensure_secure_url(endpoint, label)?;
     let mut attempt: u32 = 0;
     loop {
         let mut req = client.put(endpoint).body(body.to_vec());

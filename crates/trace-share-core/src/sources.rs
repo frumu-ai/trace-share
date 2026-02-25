@@ -11,6 +11,7 @@ use std::{
 use tracing::warn;
 
 use crate::config::{AppConfig, data_dir, default_sources_path};
+use crate::security::{ensure_secure_url, write_private_file};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SourceDef {
@@ -174,7 +175,7 @@ pub fn add_local_source(config: &AppConfig, source: SourceDef) -> Result<PathBuf
 
     manifest.sources.sort_by(|a, b| a.id.cmp(&b.id));
     let text = toml::to_string_pretty(&manifest)?;
-    fs::write(&path, text)?;
+    write_private_file(&path, text.as_bytes())?;
     Ok(path)
 }
 
@@ -184,6 +185,7 @@ pub async fn load_remote_registry(config: &AppConfig) -> Result<SourceManifest> 
         .url
         .clone()
         .context("remote registry url missing")?;
+    ensure_secure_url(&url, "remote registry URL")?;
 
     let cache_path = data_dir()?.join("registry-cache.json");
     let cached = read_cache(&cache_path).ok();
@@ -233,7 +235,8 @@ pub async fn load_remote_registry(config: &AppConfig) -> Result<SourceManifest> 
         etag,
         manifest: manifest.clone(),
     };
-    fs::write(cache_path, serde_json::to_vec_pretty(&snapshot)?)?;
+    let bytes = serde_json::to_vec_pretty(&snapshot)?;
+    write_private_file(&cache_path, &bytes)?;
     Ok(manifest)
 }
 

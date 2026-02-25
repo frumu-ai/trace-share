@@ -1,5 +1,6 @@
 use std::fs;
 
+use serial_test::serial;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::TcpListener,
@@ -7,7 +8,13 @@ use tokio::{
 use trace_share_core::{config::AppConfig, revocation::sync_revocations, state::StateStore};
 
 #[tokio::test]
+#[serial]
 async fn revocation_sync_retries_transient_and_marks_pushed() {
+    let prior_insecure_http = std::env::var("TRACE_SHARE_ALLOW_INSECURE_HTTP").ok();
+    unsafe {
+        std::env::set_var("TRACE_SHARE_ALLOW_INSECURE_HTTP", "1");
+    }
+
     let (base_url, server_task) = start_revocation_server(vec![500, 200]).await;
     let db_path = temp_db_path("revocation-sync-ok");
     let store = StateStore::open(db_path).expect("open state");
@@ -33,10 +40,24 @@ async fn revocation_sync_retries_transient_and_marks_pushed() {
     assert!(pending.is_empty());
 
     server_task.await.expect("server task");
+
+    unsafe {
+        if let Some(v) = prior_insecure_http {
+            std::env::set_var("TRACE_SHARE_ALLOW_INSECURE_HTTP", v);
+        } else {
+            std::env::remove_var("TRACE_SHARE_ALLOW_INSECURE_HTTP");
+        }
+    }
 }
 
 #[tokio::test]
+#[serial]
 async fn revocation_sync_does_not_retry_non_transient_and_keeps_pending() {
+    let prior_insecure_http = std::env::var("TRACE_SHARE_ALLOW_INSECURE_HTTP").ok();
+    unsafe {
+        std::env::set_var("TRACE_SHARE_ALLOW_INSECURE_HTTP", "1");
+    }
+
     let (base_url, server_task) = start_revocation_server(vec![400]).await;
     let db_path = temp_db_path("revocation-sync-fail");
     let store = StateStore::open(db_path).expect("open state");
@@ -58,6 +79,14 @@ async fn revocation_sync_does_not_retry_non_transient_and_keeps_pending() {
     assert_eq!(pending[0].episode_id, "episode-2");
 
     server_task.await.expect("server task");
+
+    unsafe {
+        if let Some(v) = prior_insecure_http {
+            std::env::set_var("TRACE_SHARE_ALLOW_INSECURE_HTTP", v);
+        } else {
+            std::env::remove_var("TRACE_SHARE_ALLOW_INSECURE_HTTP");
+        }
+    }
 }
 
 fn temp_db_path(prefix: &str) -> std::path::PathBuf {

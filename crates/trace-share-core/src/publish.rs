@@ -9,6 +9,7 @@ use crate::{
     episode::EpisodeRecord,
     models::ChunkDocument,
     sanitize::contains_sensitive_patterns,
+    security::{ensure_secure_url, write_private_file},
 };
 
 pub async fn publish_upsert_data(config: &AppConfig, docs: &[ChunkDocument]) -> Result<()> {
@@ -42,6 +43,7 @@ pub async fn publish_upsert_data(config: &AppConfig, docs: &[ChunkDocument]) -> 
         .rest_url
         .as_ref()
         .context("missing UPSTASH_VECTOR_REST_URL")?;
+    ensure_secure_url(rest_url, "upstash rest URL")?;
     let token = config
         .upstash
         .rest_token
@@ -133,7 +135,7 @@ pub fn load_or_create_anonymization_salt() -> Result<String> {
         }
     }
     let salt = uuid::Uuid::new_v4().to_string();
-    fs::write(path, &salt)?;
+    write_private_file(&path, salt.as_bytes())?;
     Ok(salt)
 }
 
@@ -148,6 +150,7 @@ pub async fn index_episode_pointer(
         .rest_url
         .as_ref()
         .context("missing UPSTASH_VECTOR_REST_URL")?;
+    ensure_secure_url(rest_url, "upstash rest URL")?;
     let token = config
         .upstash
         .rest_token

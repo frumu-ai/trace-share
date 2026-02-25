@@ -2,6 +2,56 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.0.4] - 2026-02-25
+
+### Security
+
+- Enforced HTTPS-by-default for authenticated outbound requests:
+  - worker upload/revocation endpoints
+  - Upstash publish/index endpoints
+  - remote registry fetch endpoint
+- Added explicit insecure transport override for local testing only:
+  - `TRACE_SHARE_ALLOW_INSECURE_HTTP=1`
+- Added secure local file-write path for sensitive artifacts:
+  - anonymization salt
+  - registry cache
+  - local `sources.toml` manifest
+- Hardened sanitization coverage for Windows-style paths (`C:\...`) to prevent local path leakage in exported episodes.
+
+### Testing
+
+- Updated HTTP-based integration tests to use explicit insecure transport opt-in under test environment.
+- Added/updated security-related test coverage and kept core test/clippy checks clean.
+
+## [v0.0.3] - 2026-02-25
+
+### Added
+
+- CLI version visibility improvements:
+  - `trace-share --help` now shows current version
+  - `--version` exposed consistently
+- Startup update-check notice that alerts users when a newer release is available and prints npm/cargo update commands.
+
+### Release / CI
+
+- Fixed npm publish authentication wiring in GitHub Actions.
+- Added npm package repository metadata required for npm provenance verification.
+- Added docs and workflow improvements for release/publish reliability.
+
+## [v0.0.2] - 2026-02-25
+
+### Fixed
+
+- Windows source safety/allowlist behavior:
+  - support for `USERPROFILE`/`LOCALAPPDATA` in root allowlisting
+  - `~\...` and `~/...` expansion without requiring manual `HOME` setup
+- Resolved Windows-first-run ingestion issues where valid local source roots were incorrectly rejected as unsafe.
+
+### Docs / UX
+
+- Improved docs-site routing/base-path behavior for GitHub Pages project hosting.
+- Added docs landing/index page and improved top-level docs navigation.
+
 ## [v0.0.1] - 2026-02-25
 
 Initial public release of `trace-share`.
@@ -57,4 +107,3 @@ Initial public release of `trace-share`.
 - Automated release-note generation from `CHANGELOG.md` in release workflow.
 - Docs command coverage check script for required CLI snippets.
 - Registry schema CI workflow and public docs site scaffolding.
-
