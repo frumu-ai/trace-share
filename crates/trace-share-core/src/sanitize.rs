@@ -440,7 +440,9 @@ mod tests {
         assert!(contains_sensitive_patterns("token=abc123"));
         assert!(contains_sensitive_patterns("email is test@example.com"));
         assert!(contains_sensitive_patterns("visit https://x.y/z?a=1"));
-        assert!(contains_sensitive_patterns("cwd C:\\Users\\evang\\work\\trace-share"));
+        assert!(contains_sensitive_patterns(
+            "cwd C:\\Users\\evang\\work\\trace-share"
+        ));
         assert!(contains_sensitive_patterns(
             "eyJhbGciOiJIUzI1NiJ9.abc1234567.zyx0987654"
         ));

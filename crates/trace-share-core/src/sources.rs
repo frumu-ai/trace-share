@@ -426,9 +426,7 @@ fn path_starts_with(path: &Path, root: &Path) -> bool {
         let p = path.to_string_lossy().to_lowercase();
         let r = root.to_string_lossy().to_lowercase();
         return p == r
-            || p
-                .strip_prefix(&(r.clone() + "\\"))
-                .is_some()
+            || p.strip_prefix(&(r.clone() + "\\")).is_some()
             || p.strip_prefix(&(r + "/")).is_some();
     }
 
