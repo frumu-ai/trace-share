@@ -12,7 +12,7 @@ use std::{
 use tokio::time::{Duration, sleep};
 
 use crate::{
-    config::AppConfig,
+    config::{AppConfig, validate_network_url},
     episode::{EpisodeRecord, derive_sft, derive_tooltrace},
 };
 
@@ -349,11 +349,13 @@ async fn publish_snapshot_to_worker(
         .base_url
         .as_ref()
         .context("missing TRACE_SHARE_WORKER_BASE_URL")?;
+    validate_network_url(base_url, "worker base")?;
     let endpoint = format!("{}/v1/snapshots", base_url.trim_end_matches('/'));
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(
             config.worker.timeout_seconds.max(5),
         ))
+        .no_proxy()
         .build()?;
 
     let payload = serde_json::json!({
@@ -414,13 +416,14 @@ async fn index_snapshot_pointer(
         .rest_url
         .as_ref()
         .context("missing UPSTASH_VECTOR_REST_URL")?;
+    validate_network_url(rest_url, "Upstash REST")?;
     let token = config
         .upstash
         .rest_token
         .as_ref()
         .context("missing UPSTASH_VECTOR_REST_TOKEN")?;
     let endpoint = format!("{}/upsert-data", rest_url.trim_end_matches('/'));
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder().no_proxy().build()?;
 
     let payload = serde_json::json!({
         "vectors": [

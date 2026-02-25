@@ -1,7 +1,10 @@
 use anyhow::{Context, Result};
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
-use std::{env, fs, path::PathBuf};
+use std::{
+    env, fs,
+    path::{Path, PathBuf},
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpstashConfig {
@@ -172,5 +175,46 @@ pub fn ensure_dirs() -> Result<()> {
         );
     }
     fs::create_dir_all(&data_dir)?;
+    Ok(())
+}
+
+pub fn validate_network_url(url: &str, label: &str) -> Result<()> {
+    let parsed = reqwest::Url::parse(url).with_context(|| format!("invalid {label} URL: {url}"))?;
+
+    if parsed.scheme() == "https" {
+        return Ok(());
+    }
+
+    if parsed.scheme() == "http" && (allow_insecure_http() || is_loopback_http(&parsed)) {
+        return Ok(());
+    }
+
+    anyhow::bail!(
+        "insecure {label} URL scheme '{}' is not allowed (use https; http is only allowed for loopback or when TRACE_SHARE_ALLOW_INSECURE_HTTP=1)",
+        parsed.scheme()
+    );
+}
+
+fn allow_insecure_http() -> bool {
+    env::var("TRACE_SHARE_ALLOW_INSECURE_HTTP")
+        .ok()
+        .map(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes"))
+        .unwrap_or(false)
+}
+
+fn is_loopback_http(url: &reqwest::Url) -> bool {
+    matches!(
+        url.host_str(),
+        Some("localhost") | Some("127.0.0.1") | Some("::1")
+    )
+}
+
+pub fn write_private_file(path: &Path, contents: &[u8]) -> Result<()> {
+    fs::write(path, contents)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(path, fs::Permissions::from_mode(0o600))?;
+    }
     Ok(())
 }

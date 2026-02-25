@@ -348,8 +348,19 @@ fn extract_event_index(path_text: &str) -> Option<usize> {
 }
 
 fn find_gitleaks_binary() -> Option<PathBuf> {
+    if let Some(configured) = std::env::var_os("TRACE_SHARE_GITLEAKS_PATH") {
+        let configured_path = PathBuf::from(configured);
+        if configured_path.is_absolute() && configured_path.exists() {
+            return Some(configured_path);
+        }
+        return None;
+    }
+
     let path = std::env::var_os("PATH")?;
     std::env::split_paths(&path).find_map(|dir| {
+        if !is_trusted_gitleaks_dir(&dir) {
+            return None;
+        }
         let candidate = dir.join("gitleaks");
         if candidate.exists() {
             return Some(candidate);
@@ -363,6 +374,40 @@ fn find_gitleaks_binary() -> Option<PathBuf> {
         }
         None
     })
+}
+
+fn is_trusted_gitleaks_dir(dir: &std::path::Path) -> bool {
+    if let Ok(home) = std::env::var("HOME") {
+        let home_path = PathBuf::from(home);
+        if dir.starts_with(home_path) {
+            return false;
+        }
+    }
+
+    #[cfg(unix)]
+    {
+        return dir.starts_with("/usr/bin")
+            || dir.starts_with("/usr/local/bin")
+            || dir.starts_with("/opt/homebrew/bin")
+            || dir.starts_with("/bin")
+            || dir.starts_with("/sbin")
+            || dir.starts_with("/usr/sbin");
+    }
+
+    #[cfg(windows)]
+    {
+        if let Ok(program_files) = std::env::var("ProgramFiles") {
+            if dir.starts_with(PathBuf::from(program_files)) {
+                return true;
+            }
+        }
+        if let Ok(program_files_x86) = std::env::var("ProgramFiles(x86)") {
+            if dir.starts_with(PathBuf::from(program_files_x86)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]

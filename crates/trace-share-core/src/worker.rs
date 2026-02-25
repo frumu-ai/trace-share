@@ -4,7 +4,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use tokio::time::{Duration, sleep};
 
-use crate::{config::AppConfig, episode::EpisodeRecord};
+use crate::{
+    config::{AppConfig, validate_network_url},
+    episode::EpisodeRecord,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkerUploadResponse {
@@ -51,12 +54,14 @@ async fn upload_episode_legacy(
         .base_url
         .as_ref()
         .context("missing TRACE_SHARE_WORKER_BASE_URL")?;
+    validate_network_url(base_url, "worker base")?;
 
     let endpoint = format!("{}/v1/episodes", base_url.trim_end_matches('/'));
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(
             config.worker.timeout_seconds.max(5),
         ))
+        .no_proxy()
         .build()?;
 
     let mut attempt: u32 = 0;
@@ -103,12 +108,14 @@ async fn upload_episode_presigned(
         .base_url
         .as_ref()
         .context("missing TRACE_SHARE_WORKER_BASE_URL")?;
+    validate_network_url(base_url, "worker base")?;
     let presign_endpoint = format!("{}/v1/episodes/presign", base_url.trim_end_matches('/'));
     let complete_endpoint = format!("{}/v1/episodes/complete", base_url.trim_end_matches('/'));
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(
             config.worker.timeout_seconds.max(5),
         ))
+        .no_proxy()
         .build()?;
 
     let presign_payload = serde_json::json!({
@@ -163,12 +170,14 @@ pub async fn push_revocation(
         .base_url
         .as_ref()
         .context("missing TRACE_SHARE_WORKER_BASE_URL")?;
+    validate_network_url(base_url, "worker base")?;
 
     let endpoint = format!("{}/v1/revocations", base_url.trim_end_matches('/'));
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(
             config.worker.timeout_seconds.max(5),
         ))
+        .no_proxy()
         .build()?;
 
     let payload = serde_json::json!({

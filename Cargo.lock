@@ -1780,7 +1780,7 @@ checksum = "8df9b6e13f2d32c91b9bd719c00d1958837bc7dec474d94952798cc8e69eeec3"
 
 [[package]]
 name = "trace-share-cli"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "anyhow",
  "clap",
@@ -1795,7 +1795,7 @@ dependencies = [
 
 [[package]]
 name = "trace-share-core"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "anyhow",
  "blake3",

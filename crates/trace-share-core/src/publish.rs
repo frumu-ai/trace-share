@@ -5,7 +5,7 @@ use std::fs;
 use tokio::time::{Duration, sleep};
 
 use crate::{
-    config::{AppConfig, data_dir},
+    config::{AppConfig, data_dir, validate_network_url, write_private_file},
     episode::EpisodeRecord,
     models::ChunkDocument,
     sanitize::contains_sensitive_patterns,
@@ -42,6 +42,7 @@ pub async fn publish_upsert_data(config: &AppConfig, docs: &[ChunkDocument]) -> 
         .rest_url
         .as_ref()
         .context("missing UPSTASH_VECTOR_REST_URL")?;
+    validate_network_url(rest_url, "Upstash REST")?;
     let token = config
         .upstash
         .rest_token
@@ -49,7 +50,7 @@ pub async fn publish_upsert_data(config: &AppConfig, docs: &[ChunkDocument]) -> 
         .context("missing UPSTASH_VECTOR_REST_TOKEN")?;
 
     let endpoint = format!("{}/upsert-data", rest_url.trim_end_matches('/'));
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder().no_proxy().build()?;
 
     let payload = json!({
         "vectors": anonymized_docs.iter().map(|doc| {
@@ -133,7 +134,7 @@ pub fn load_or_create_anonymization_salt() -> Result<String> {
         }
     }
     let salt = uuid::Uuid::new_v4().to_string();
-    fs::write(path, &salt)?;
+    write_private_file(&path, salt.as_bytes())?;
     Ok(salt)
 }
 
@@ -148,6 +149,7 @@ pub async fn index_episode_pointer(
         .rest_url
         .as_ref()
         .context("missing UPSTASH_VECTOR_REST_URL")?;
+    validate_network_url(rest_url, "Upstash REST")?;
     let token = config
         .upstash
         .rest_token
@@ -156,7 +158,7 @@ pub async fn index_episode_pointer(
 
     let salt = load_or_create_anonymization_salt()?;
     let endpoint = format!("{}/upsert-data", rest_url.trim_end_matches('/'));
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder().no_proxy().build()?;
 
     let metadata = serde_json::json!({
         "kind": "episode_pointer",
