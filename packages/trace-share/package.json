@@ -3,6 +3,10 @@
   "version": "0.0.2",
   "description": "npm wrapper for trace-share binary",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/frumu-ai/trace-share"
+  },
   "scripts": {
     "postinstall": "node ./bin/install.js"
   },
