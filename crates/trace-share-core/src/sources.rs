@@ -385,28 +385,57 @@ fn has_parent_traversal(path: &Path) -> bool {
 }
 
 fn is_root_allowlisted(path: &Path) -> bool {
-    if let Ok(home) = env::var("HOME") {
-        let home = PathBuf::from(home);
-        if path.starts_with(&home) {
-            return true;
-        }
-    }
-    if let Ok(appdata) = env::var("APPDATA") {
-        let appdata = PathBuf::from(appdata);
-        if path.starts_with(&appdata) {
-            return true;
-        }
-    }
-    false
+    allowlisted_roots()
+        .into_iter()
+        .any(|root| path_starts_with(path, &root))
 }
 
 fn expand_tilde(input: &str) -> PathBuf {
-    if input == "~" || input.starts_with("~/") {
-        if let Ok(home) = env::var("HOME") {
-            return PathBuf::from(input.replacen('~', &home, 1));
+    if input == "~" || input.starts_with("~/") || input.starts_with("~\\") {
+        if let Some(home) = resolve_home_dir() {
+            return PathBuf::from(input.replacen('~', home.to_string_lossy().as_ref(), 1));
         }
     }
     PathBuf::from(input)
+}
+
+fn allowlisted_roots() -> Vec<PathBuf> {
+    let mut roots = Vec::new();
+    if let Some(home) = resolve_home_dir() {
+        roots.push(home);
+    }
+    if let Ok(appdata) = env::var("APPDATA") {
+        roots.push(PathBuf::from(appdata));
+    }
+    if let Ok(local_appdata) = env::var("LOCALAPPDATA") {
+        roots.push(PathBuf::from(local_appdata));
+    }
+    roots
+}
+
+fn resolve_home_dir() -> Option<PathBuf> {
+    env::var("HOME")
+        .ok()
+        .map(PathBuf::from)
+        .or_else(|| env::var("USERPROFILE").ok().map(PathBuf::from))
+}
+
+fn path_starts_with(path: &Path, root: &Path) -> bool {
+    #[cfg(windows)]
+    {
+        let p = path.to_string_lossy().to_lowercase();
+        let r = root.to_string_lossy().to_lowercase();
+        return p == r
+            || p
+                .strip_prefix(&(r.clone() + "\\"))
+                .is_some()
+            || p.strip_prefix(&(r + "/")).is_some();
+    }
+
+    #[cfg(not(windows))]
+    {
+        path.starts_with(root)
+    }
 }
 
 #[cfg(test)]
