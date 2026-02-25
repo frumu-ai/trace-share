@@ -1,6 +1,6 @@
 # Releasing
 
-This repo uses tag-driven GitHub releases plus manual registry publishing (crates.io + npm).
+This repo uses tag-driven GitHub releases and automated registry publishing (crates.io + npm).
 
 ## 1) Prepare the Version
 
@@ -41,11 +41,12 @@ cd packages/trace-share && npm publish --dry-run --access public
 
 ```bash
 git push origin main
-git tag -a v0.0.1 -m "v0.0.1"
-git push origin v0.0.1
+git tag -a v0.0.2 -m "v0.0.2"
+git push origin v0.0.2
 ```
 
 Pushing the tag triggers `.github/workflows/release.yml`.
+After `Release` completes successfully, `.github/workflows/publish-registries.yml` runs automatically and publishes crates/npm (using `CARGO_REGISTRY_TOKEN` and `NPM_TOKEN`).
 
 ## 4) What Release Workflow Does
 
@@ -57,7 +58,7 @@ The `release.yml` workflow:
 - uploads release assets (archives + npm binary assets + checksums)
 - publishes the release (marks draft false)
 
-## 5) Publish to crates.io (Manual)
+## 5) Publish to crates.io (Fallback Manual)
 
 Publish in dependency order:
 
@@ -71,7 +72,7 @@ Requirements:
 
 - `cargo login <CRATES_IO_TOKEN>` done on your machine
 
-## 6) Publish npm Wrapper (Manual)
+## 6) Publish npm Wrapper (Fallback Manual)
 
 ```bash
 cd packages/trace-share

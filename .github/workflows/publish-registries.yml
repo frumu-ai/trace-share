@@ -25,6 +25,9 @@ on:
   push:
     tags:
       - "publish-v*"
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
 
 permissions:
   contents: read
@@ -32,6 +35,7 @@ permissions:
 
 jobs:
   preflight:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.resolve.outputs.version }}
@@ -40,6 +44,9 @@ jobs:
       dry_run: ${{ steps.resolve.outputs.dry_run }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-node@v4
         with:
@@ -53,6 +60,21 @@ jobs:
             crates_enabled="${{ inputs.publish_crates }}"
             npm_enabled="${{ inputs.publish_npm }}"
             dry_run="${{ inputs.dry_run }}"
+          elif [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            sha="${{ github.event.workflow_run.head_sha }}"
+            tag="$(git tag --points-at "$sha" | grep '^v' | head -n 1 || true)"
+            if [[ -z "$tag" ]]; then
+              echo "No v* tag points at workflow_run sha=$sha; skipping registries publish."
+              echo "version=" >> "$GITHUB_OUTPUT"
+              echo "crates_enabled=false" >> "$GITHUB_OUTPUT"
+              echo "npm_enabled=false" >> "$GITHUB_OUTPUT"
+              echo "dry_run=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            version="${tag#v}"
+            crates_enabled="true"
+            npm_enabled="true"
+            dry_run="false"
           else
             ref="${GITHUB_REF_NAME}"
             version="${ref#publish-v}"
