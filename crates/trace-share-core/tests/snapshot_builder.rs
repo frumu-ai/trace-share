@@ -31,12 +31,12 @@ fn snapshot_filters_revoked_invalid_and_deduped_records() {
     revoked_ids.insert("ep-revoked".to_string());
 
     let out = root.join("out");
-    let result = build_snapshot("0.1.0", &input, &out, "seed-a", &revoked_ids)
+    let result = build_snapshot("0.0.1", &input, &out, "seed-a", &revoked_ids)
         .expect("snapshot should build");
 
     assert_eq!(result.train_count + result.val_count, 1);
 
-    let out_dir = out.join("dataset-0.1.0");
+    let out_dir = out.join("dataset-0.0.1");
     assert!(out_dir.join("manifest.json").exists());
     assert!(out_dir.join("CHECKSUMS.txt").exists());
     assert!(out_dir.join("DATA_CARD.md").exists());
