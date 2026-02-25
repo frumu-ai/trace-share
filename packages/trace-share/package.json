@@ -1,0 +1,18 @@
+{
+  "name": "@frumu-ai/trace-share",
+  "version": "0.1.0",
+  "description": "npm wrapper for trace-share binary",
+  "license": "MIT",
+  "scripts": {
+    "postinstall": "node ./bin/install.js"
+  },
+  "bin": {
+    "trace-share": "bin/trace-share.js"
+  },
+  "files": [
+    "bin"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

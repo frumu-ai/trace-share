@@ -1,0 +1,5 @@
+version = 1
+redact_email = true
+redact_ip = true
+redact_paths = true
+redact_tokens = true

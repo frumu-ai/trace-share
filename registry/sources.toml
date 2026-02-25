@@ -1,0 +1,73 @@
+version = 1
+
+[[sources]]
+id = "codex_cli"
+display_name = "Codex CLI"
+roots = ["~/.codex/sessions"]
+globs = ["**/*"]
+format = "jsonl"
+parser_hint = "codex_cli_v1"
+platforms = ["linux", "macos", "windows"]
+requires_opt_in = false
+
+[[sources]]
+id = "claude_code"
+display_name = "Claude Code"
+roots = ["~/.claude/projects"]
+globs = ["**/sessions/*.jsonl"]
+format = "jsonl"
+parser_hint = "claude_code_v1"
+platforms = ["linux", "macos", "windows"]
+requires_opt_in = false
+
+[[sources]]
+id = "vscode_global_storage"
+display_name = "VS Code Global Storage"
+roots = [
+  "~/.config/Code/User/globalStorage",
+  "~/Library/Application Support/Code/User/globalStorage",
+  "~/AppData/Roaming/Code/User/globalStorage"
+]
+globs = ["**/*.json", "**/*.jsonl"]
+format = "jsonl"
+parser_hint = "vscode_storage_v1"
+platforms = ["linux", "macos", "windows"]
+requires_opt_in = false
+
+[[sources]]
+id = "tandem_sessions"
+display_name = "Tandem Sessions"
+roots = [
+  "~/.local/share/tandem/data/storage",
+  "~/Library/Application Support/tandem/data/storage",
+  "~/AppData/Roaming/tandem/data/storage"
+]
+globs = ["**/sessions.json"]
+format = "json"
+parser_hint = "tandem_v1"
+platforms = ["linux", "macos", "windows"]
+requires_opt_in = true
+
+[[sources]]
+id = "cursor_workspace_storage"
+roots = [
+  "~/.config/Cursor/User/workspaceStorage",
+  "~/Library/Application Support/Cursor/User/workspaceStorage",
+  "~/AppData/Roaming/Cursor/User/workspaceStorage"
+]
+globs = ["**/state.vscdb", "**/workspace.json", "**/agent-transcripts/**/*.json*"]
+format = "mixed"
+parser_hint = "cursor_v1"
+requires_opt_in = true
+
+[[sources]]
+id = "roo_code_global_storage"
+roots = [
+  "~/.config/Code/User/globalStorage",
+  "~/Library/Application Support/Code/User/globalStorage",
+  "~/AppData/Roaming/Code/User/globalStorage"
+]
+globs = ["**/RooVeterinaryInc.roo-cline/**"]
+format = "mixed"
+parser_hint = "roo_code_v1"
+requires_opt_in = true

@@ -1,0 +1,131 @@
+name: Publish Registries
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (example: 0.1.0)"
+        required: true
+        type: string
+      publish_crates:
+        description: "Publish crates"
+        required: true
+        default: true
+        type: boolean
+      publish_npm:
+        description: "Publish npm"
+        required: true
+        default: true
+        type: boolean
+      dry_run:
+        description: "Dry run"
+        required: true
+        default: false
+        type: boolean
+  push:
+    tags:
+      - "publish-v*"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      crates_enabled: ${{ steps.resolve.outputs.crates_enabled }}
+      npm_enabled: ${{ steps.resolve.outputs.npm_enabled }}
+      dry_run: ${{ steps.resolve.outputs.dry_run }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - id: resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            version="${{ inputs.version }}"
+            crates_enabled="${{ inputs.publish_crates }}"
+            npm_enabled="${{ inputs.publish_npm }}"
+            dry_run="${{ inputs.dry_run }}"
+          else
+            ref="${GITHUB_REF_NAME}"
+            version="${ref#publish-v}"
+            crates_enabled="true"
+            npm_enabled="true"
+            dry_run="false"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "crates_enabled=$crates_enabled" >> "$GITHUB_OUTPUT"
+          echo "npm_enabled=$npm_enabled" >> "$GITHUB_OUTPUT"
+          echo "dry_run=$dry_run" >> "$GITHUB_OUTPUT"
+      - name: cargo check
+        run: cargo check --workspace
+
+  publish_crates:
+    needs: preflight
+    if: needs.preflight.outputs.crates_enabled == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - shell: bash
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          PUBLISH_CRATES_LOG: publish-crates.log
+        run: |
+          set -euo pipefail
+          if [[ -z "${CARGO_REGISTRY_TOKEN:-}" ]]; then
+            echo "Missing CARGO_REGISTRY_TOKEN"
+            exit 1
+          fi
+          if [[ "${{ needs.preflight.outputs.dry_run }}" == "true" ]]; then
+            ./scripts/publish-crates-ci.sh --dry-run
+          else
+            ./scripts/publish-crates-ci.sh
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: crates-publish-log
+          path: publish-crates.log
+          if-no-files-found: warn
+
+  publish_npm:
+    needs: [preflight, publish_crates]
+    if: |
+      always() && needs.preflight.outputs.npm_enabled == 'true' &&
+      (needs.preflight.outputs.crates_enabled != 'true' || needs.publish_crates.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - shell: bash
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          PUBLISH_NPM_LOG: publish-npm.log
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/.npmrc" <<'NPMRC'
+          registry=https://registry.npmjs.org/
+          NPMRC
+          if [[ -n "${NPM_TOKEN:-}" ]]; then
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> "$RUNNER_TEMP/.npmrc"
+          fi
+          echo "NPM_CONFIG_USERCONFIG=$RUNNER_TEMP/.npmrc" >> "$GITHUB_ENV"
+          if [[ "${{ needs.preflight.outputs.dry_run }}" == "true" ]]; then
+            ./scripts/publish-npm-ci.sh --dry-run
+          else
+            ./scripts/publish-npm-ci.sh --provenance
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-publish-log
+          path: publish-npm.log
+          if-no-files-found: warn

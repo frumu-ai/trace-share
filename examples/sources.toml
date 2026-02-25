@@ -1,0 +1,11 @@
+version = 1
+
+[[sources]]
+id = "my_agent"
+display_name = "My Agent Logs"
+roots = ["~/my-agent/logs"]
+globs = ["**/*.jsonl"]
+format = "jsonl"
+parser_hint = "generic_jsonl"
+platforms = ["linux", "macos", "windows"]
+requires_opt_in = true

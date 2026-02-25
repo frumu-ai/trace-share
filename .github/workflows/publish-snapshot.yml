@@ -1,0 +1,126 @@
+name: Publish Snapshot
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Snapshot version (example: 0.1.0)"
+        required: true
+        type: string
+      input_path:
+        description: "Path to Episode records (JSONL file or directory)"
+        required: true
+        type: string
+      output_dir:
+        description: "Output directory for built snapshot"
+        required: false
+        default: "dist/snapshots"
+        type: string
+      split_seed:
+        description: "Deterministic train/val split seed"
+        required: false
+        default: "trace-share-split-v1"
+        type: string
+      publish:
+        description: "Publish snapshot after build"
+        required: true
+        default: false
+        type: boolean
+      dry_run:
+        description: "Dry-run publish (requires publish=true)"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Validate workspace
+        run: cargo check --workspace
+
+      - name: Build and optionally publish snapshot
+        env:
+          SNAPSHOT_VERSION: ${{ inputs.version }}
+          SNAPSHOT_INPUT_PATH: ${{ inputs.input_path }}
+          SNAPSHOT_OUT_DIR: ${{ inputs.output_dir }}
+          SNAPSHOT_SPLIT_SEED: ${{ inputs.split_seed }}
+          SNAPSHOT_PUBLISH: ${{ inputs.publish }}
+          SNAPSHOT_DRY_RUN: ${{ inputs.dry_run }}
+          TRACE_SHARE_WORKER_BASE_URL: ${{ secrets.TRACE_SHARE_WORKER_BASE_URL }}
+          TRACE_SHARE_WORKER_API_TOKEN: ${{ secrets.TRACE_SHARE_WORKER_API_TOKEN }}
+          UPSTASH_VECTOR_REST_URL: ${{ secrets.UPSTASH_VECTOR_REST_URL }}
+          UPSTASH_VECTOR_REST_TOKEN: ${{ secrets.UPSTASH_VECTOR_REST_TOKEN }}
+          PUBLISH_SNAPSHOT_LOG: publish-snapshot.log
+          SNAPSHOT_META_PATH: snapshot-publish-meta.json
+        run: ./scripts/publish-snapshot-ci.sh
+
+      - name: Update registry latest snapshot pointer
+        if: ${{ inputs.publish && !inputs.dry_run }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          meta_path = Path("snapshot-publish-meta.json")
+          if not meta_path.exists():
+              raise SystemExit("missing snapshot-publish-meta.json")
+          meta = json.loads(meta_path.read_text())
+          out = {
+              "version": meta.get("version"),
+              "snapshot_dir": meta.get("snapshot_dir"),
+              "object_prefix": meta.get("object_prefix"),
+              "updated_at": __import__("datetime").datetime.utcnow().isoformat(timespec="seconds") + "Z",
+          }
+          pointer_path = Path("registry/snapshots/latest.json")
+          pointer_path.parent.mkdir(parents=True, exist_ok=True)
+          pointer_path.write_text(json.dumps(out, indent=2) + "\n")
+          print(f"updated {pointer_path}")
+          PY
+
+      - name: Commit registry pointer update
+        if: ${{ inputs.publish && !inputs.dry_run }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- registry/snapshots/latest.json; then
+            echo "No registry pointer changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add registry/snapshots/latest.json
+          git commit -m "chore(registry): update latest snapshot pointer to ${{ inputs.version }}"
+          git push
+
+      - name: Upload snapshot artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-${{ inputs.version }}
+          path: ${{ inputs.output_dir }}/dataset-${{ inputs.version }}
+          if-no-files-found: error
+
+      - name: Upload snapshot publish log
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-publish-log
+          path: publish-snapshot.log
+          if-no-files-found: warn
+
+      - name: Upload snapshot publish metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-publish-meta
+          path: snapshot-publish-meta.json
+          if-no-files-found: warn

@@ -1,0 +1,23 @@
+[upstash]
+rest_url = "https://YOUR-UPSTASH-URL"
+rest_token = "YOUR-TOKEN"
+namespace = "default"
+
+[worker]
+base_url = "https://YOUR-WORKER-URL"
+api_token = ""
+timeout_seconds = 30
+upload_mode = "legacy" # one of: legacy, presigned, auto
+
+[policy]
+path = "~/.trace-share/policy.toml"
+allowlist_mode = false
+
+sources_path = "~/.trace-share/sources.toml"
+
+[remote_registry]
+enabled = false
+url = "https://raw.githubusercontent.com/frumu-ai/trace-share-registry/main/registry/sources.toml"
+cache_ttl_hours = 24
+require_consent = true
+last_accepted_digest = ""

@@ -1,0 +1,19 @@
+[package]
+name = "trace-share-cli"
+edition.workspace = true
+license = "MIT OR Apache-2.0"
+version.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "trace-share"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+serde_json.workspace = true
+trace-share-core = { path = "../trace-share-core" }
